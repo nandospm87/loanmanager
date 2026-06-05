@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LoanManager">
+<meta name="theme-color" content="#185FA5">
+<title>LoanManager</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  :root {
+    --blue: #185FA5;
+    --blue-light: #E6F1FB;
+    --green: #0F6E56;
+    --green-light: #E1F5EE;
+    --red: #A32D2D;
+    --red-light: #FCEBEB;
+    --amber: #854F0B;
+    --amber-light: #FAEEDA;
+    --bg: #F2F4F7;
+    --card: #FFFFFF;
+    --border: #E0E4EA;
+    --text: #1A1D23;
+    --text2: #6B7280;
+    --text3: #9CA3AF;
+    --radius: 12px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.08);
+    --nav-h: 68px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overscroll-behavior: none; }
+
+  /* TOP BAR */
+  .topbar { background: var(--blue); color: #fff; padding: 52px 18px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+  .topbar h1 { font-size: 17px; font-weight: 600; }
+  .topbar-right { display: flex; gap: 10px; }
+  .icon-btn { background: rgba(255,255,255,0.2); border: none; border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; cursor: pointer; }
+
+  /* BOTTOM NAV */
+  .nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; height: var(--nav-h); z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 10px; color: var(--text2); cursor: pointer; padding: 8px 4px; border: none; background: none; font-family: inherit; position: relative; }
+  .nav-item.active { color: var(--blue); }
+  .nav-item i { font-size: 22px; }
+  .nav-item .dot { position: absolute; top: 8px; right: calc(50% - 14px); width: 7px; height: 7px; background: var(--red); border-radius: 50%; border: 1.5px solid var(--card); }
+
+  /* CONTENT */
+  .content { padding: 16px; padding-bottom: calc(var(--nav-h) + 16px); min-height: 100vh; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 12px; }
+
+  /* KPI GRID */
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .kpi { background: var(--card); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
+  .kpi-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .kpi-value { font-size: 20px; font-weight: 700; }
+  .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .kv-blue { color: var(--blue); }
+  .kv-green { color: var(--green); }
+  .kv-red { color: var(--red); }
+
+  /* LISTA DE CONTRATOS */
+  .contrato-item { background: var(--card); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .contrato-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--blue-light); display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--blue); flex-shrink: 0; }
+  .contrato-icon.red { background: var(--red-light); color: var(--red); }
+  .contrato-icon.green { background: var(--green-light); color: var(--green); }
+  .contrato-info { flex: 1; min-width: 0; }
+  .contrato-nome { font-size: 14px; font-weight: 600; }
+  .contrato-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .contrato-right { text-align: right; flex-shrink: 0; }
+  .contrato-valor { font-size: 14px; font-weight: 700; color: var(--blue); }
+  .contrato-status { font-size: 11px; margin-top: 3px; }
+
+  /* PILLS */
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .pill-green { background: #EAF3DE; color: #3B6D11; }
+  .pill-red { background: var(--red-light); color: var(--red); }
+  .pill-teal { background: var(--green-light); color: var(--green); }
+  .pill-amber { background: var(--amber-light); color: var(--amber); }
+  .pill-blue { background: var(--blue-light); color: var(--blue); }
+
+  /* PROGRESS */
+  .prog-wrap { margin-top: 8px; }
+  .prog-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+  .prog-bar { background: var(--bg); border-radius: 4px; height: 6px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 4px; background: var(--blue); }
+  .prog-fill.red { background: var(--red); }
+  .prog-fill.green { background: var(--green); }
+
+  /* SEARCH */
+  .search-wrap { position: relative; margin-bottom: 12px; }
+  .search-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 18px; }
+  .search-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px 10px 38px; font-size: 15px; color: var(--text); font-family: inherit; box-shadow: var(--shadow); }
+
+  /* BOTÕES */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 20px; border-radius: 10px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity .15s; width: 100%; }
+  .btn:active { opacity: .8; }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-outline { background: var(--card); color: var(--blue); border: 1.5px solid var(--blue); }
+  .btn-red { background: var(--red); color: #fff; }
+  .btn-sm { padding: 8px 14px; font-size: 13px; border-radius: 8px; width: auto; }
+
+  /* MODAL / SHEET */
+  .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; display: none; align-items: flex-end; }
+  .sheet-overlay.open { display: flex; }
+  .sheet { background: var(--card); border-radius: 20px 20px 0 0; width: 100%; max-height: 92vh; overflow-y: auto; padding: 0 0 env(safe-area-inset-bottom); animation: slideUp .3s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 4px; }
+  .sheet-header { padding: 12px 18px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .sheet-header h3 { font-size: 16px; font-weight: 700; }
+  .sheet-body { padding: 18px; }
+  .sheet-footer { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+
+  /* FORM */
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .03em; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 15px; color: var(--text); font-family: inherit; -webkit-appearance: none; }
+  .form-group textarea { resize: none; height: 80px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .calc-box { background: var(--blue-light); border-radius: 10px; padding: 14px; margin-top: 4px; display: none; }
+  .calc-box.show { display: block; }
+  .calc-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .calc-item label { font-size: 10px; color: var(--blue); font-weight: 600; display: block; margin-bottom: 2px; }
+  .calc-item span { font-size: 15px; font-weight: 700; color: var(--blue); }
+
+  /* DETALHE */
+  .detail-kpi { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
+  .detail-kpi-item { background: var(--bg); border-radius: 10px; padding: 10px; text-align: center; }
+  .detail-kpi-item label { font-size: 10px; color: var(--text2); display: block; margin-bottom: 3px; }
+  .detail-kpi-item span { font-size: 14px; font-weight: 700; }
+
+  /* TIMELINE */
+  .timeline { padding-left: 16px; }
+  .tl-item { position: relative; padding-bottom: 14px; padding-left: 18px; }
+  .tl-item:before { content: ''; position: absolute; left: -8px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: var(--blue); border: 2px solid var(--card); }
+  .tl-item:after { content: ''; position: absolute; left: -4px; top: 15px; width: 2px; bottom: 0; background: var(--border); }
+  .tl-item:last-child:after { display: none; }
+  .tl-item.ok:before { background: var(--green); }
+  .tl-item.bad:before { background: var(--red); }
+  .tl-title { font-size: 13px; font-weight: 600; }
+  .tl-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* ALERTAS */
+  .alerta { border-radius: var(--radius); padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; }
+  .alerta i { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .alerta-title { font-size: 14px; font-weight: 600; }
+  .alerta-sub { font-size: 12px; margin-top: 3px; opacity: .85; }
+  .alerta-danger { background: var(--red-light); color: var(--red); }
+  .alerta-warn { background: var(--amber-light); color: var(--amber); }
+  .alerta-info { background: var(--green-light); color: var(--green); }
+
+  /* AI */
+  .ai-messages { display: flex; flex-direction: column; gap: 10px; min-height: 160px; max-height: 280px; overflow-y: auto; margin-bottom: 12px; padding: 4px 0; }
+  .ai-bubble { padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.55; max-width: 85%; }
+  .ai-bubble.ai { background: var(--bg); color: var(--text); border-radius: 4px 14px 14px 14px; }
+  .ai-bubble.user { background: var(--blue); color: #fff; align-self: flex-end; border-radius: 14px 14px 4px 14px; }
+  .ai-input-wrap { display: flex; gap: 8px; }
+  .ai-input-wrap input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; font-size: 14px; font-family: inherit; color: var(--text); }
+  .ai-send { background: var(--blue); border: none; border-radius: 10px; width: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; cursor: pointer; }
+  .ai-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .ai-chip { background: var(--blue-light); color: var(--blue); border: none; border-radius: 20px; padding: 6px 12px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; }
+
+  /* RENEGOCIAÇÃO */
+  .rng-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .rng-opt { background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 12px; cursor: pointer; }
+  .rng-opt.sel { border-color: var(--blue); background: var(--blue-light); }
+  .rng-opt-title { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+  .rng-opt-sub { font-size: 11px; color: var(--text2); }
+  .rng-result { background: var(--blue-light); border-radius: var(--radius); padding: 14px; margin-top: 12px; display: none; }
+  .rng-result.show { display: block; }
+  .rng-nums { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 8px; }
+  .rng-num label { font-size: 10px; color: var(--blue); display: block; margin-bottom: 2px; }
+  .rng-num span { font-size: 15px; font-weight: 700; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: calc(var(--nav-h) + 12px); left: 16px; right: 16px; background: #1A1D23; color: #fff; padding: 14px 18px; border-radius: var(--radius); font-size: 14px; font-weight: 500; z-index: 300; display: none; align-items: center; gap: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.25); }
+  .toast.show { display: flex; }
+
+  /* SECTION HEADER */
+  .sec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .sec-title { font-size: 20px; font-weight: 700; }
+
+  /* FAB */
+  .fab { position: fixed; right: 18px; bottom: calc(var(--nav-h) + 14px); width: 54px; height: 54px; background: var(--blue); border-radius: 16px; border: none; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 26px; box-shadow: 0 4px 16px rgba(24,95,165,.4); cursor: pointer; z-index: 90; }
+
+  /* SEPARATOR */
+  .sep { height: 1px; background: var(--border); margin: 14px 0; }
+
+  /* BARS CHART */
+  .bars-wrap { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bar-rect { width: 100%; border-radius: 4px 4px 0 0; }
+  .bar-label { font-size: 10px; color: var(--text2); }
+
+  /* PAGAMENTO ITEM */
+  .pgto-item { background: var(--card); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .pgto-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .pgto-cont { font-size: 13px; font-weight: 600; color: var(--blue); }
+  .pgto-cli { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .pgto-valor { font-size: 15px; font-weight: 700; }
+  .pgto-mora { font-size: 11px; color: var(--red); margin-top: 1px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <h1 id="page-title">Painel</h1>
+  <div class="topbar-right">
+    <button class="icon-btn" onclick="openSheet('sheet-pgto')" title="Registrar Pagamento"><i class="ti ti-cash"></i></button>
+    <button class="icon-btn" onclick="openSheet('sheet-contrato')" title="Novo Contrato"><i class="ti ti-plus"></i></button>
+  </div>
+</div>
+
+<!-- CONTEÚDO -->
+<div class="content">
+
+  <!-- PAINEL -->
+  <div class="page active" id="page-painel">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Carteira Total</div><div class="kpi-value kv-blue">R$ 284.500</div><div class="kpi-sub">8 contratos</div></div>
+      <div class="kpi"><div class="kpi-label">Recebido (mês)</div><div class="kpi-value kv-green">R$ 18.340</div><div class="kpi-sub">↑ 12% vs anterior</div></div>
+      <div class="kpi"><div class="kpi-label">Em Atraso</div><div class="kpi-value kv-red">R$ 4.200</div><div class="kpi-sub">2 contratos</div></div>
+      <div class="kpi"><div class="kpi-label">Inadimplência</div><div class="kpi-value kv-red">3,2%</div><div class="kpi-sub">Meta &lt; 5%</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Recebimentos — 6 meses</div>
+      <div class="bars-wrap" id="bars-dash"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:5px" id="bars-lbl"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Próximos vencimentos</div>
+      <div id="proximos-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Distribuição da carteira</div>
+      <div id="distrib-list"></div>
+    </div>
+  </div>
+
+  <!-- CONTRATOS -->
+  <div class="page" id="page-contratos">
+    <div class="sec-header">
+      <span class="sec-title">Contratos</span>
+    </div>
+    <div class="search-wrap">
+      <i class="ti ti-search"></i>
+      <input class="search-input" type="text" placeholder="Buscar cliente ou contrato..." id="search-cont" oninput="filtrarContratos()">
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px">
+      <button class="btn btn-sm btn-blue" id="filt-todos" onclick="setFiltro('')">Todos</button>
+      <button class="btn btn-sm btn-outline" id="filt-ativo" onclick="setFiltro('Ativo')">Ativos</button>
+      <button class="btn btn-sm btn-outline" id="filt-atraso" onclick="setFiltro('Em Atraso')">Em Atraso</button>
+      <button class="btn btn-sm btn-outline" id="filt-quitado" onclick="setFiltro('Quitado')">Quitados</button>
+    </div>
+    <div id="contratos-list"></div>
+    <button class="fab" onclick="openSheet('sheet-contrato')"><i class="ti ti-plus"></i></button>
+  </div>
+
+  <!-- PAGAMENTOS -->
+  <div class="page" id="page-pagamentos">
+    <div class="sec-header">
+      <span class="sec-title">Pagamentos</span>
+    </div>
+    <div class="search-wrap">
+      <i class="ti ti-search"></i>
+      <input class="search-input" type="text" placeholder="Buscar..." id="search-pgto" oninput="filtrarPgtos()">
+    </div>
+    <div id="pgtos-list"></div>
+    <button class="fab" onclick="openSheet('sheet-pgto')"><i class="ti ti-plus"></i></button>
+  </div>
+
+  <!-- IA -->
+  <div class="page" id="page-ia">
+    <div class="sec-header">
+      <span class="sec-title">Análise com IA</span>
+    </div>
+    <div class="card">
+      <div class="form-group">
+        <label>Selecionar contrato</label>
+        <select id="ia-select" onchange="carregarContextoIA()">
+          <option value="">Carteira geral</option>
+          <option value="EMP-001">EMP-001 — Ana Lima</option>
+          <option value="EMP-002">EMP-002 — Carlos Mendes</option>
+          <option value="EMP-003">EMP-003 — Roberto Alves (atraso)</option>
+          <option value="EMP-004">EMP-004 — Mariana Costa</option>
+          <option value="EMP-007">EMP-007 — Julia Ramos (atraso)</option>
+        </select>
+      </div>
+      <div id="ia-ctx" style="display:none;background:var(--bg);border-radius:10px;padding:12px;margin-bottom:12px">
+        <div id="ia-ctx-body"></div>
+      </div>
+      <div class="ai-chips" id="ia-chips"></div>
+      <div class="ai-messages" id="ai-msgs">
+        <div class="ai-bubble ai">Olá! Sou seu assistente de crédito com IA. Selecione um contrato ou faça uma pergunta sobre a carteira.</div>
+      </div>
+      <div class="ai-input-wrap">
+        <input type="text" id="ai-in" placeholder="Pergunte algo..." onkeydown="if(event.key==='Enter')enviarIA()">
+        <button class="ai-send" onclick="enviarIA()"><i class="ti ti-send"></i></button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:0">
+      <div class="card-title">Simulador de Renegociação</div>
+      <div class="form-group">
+        <label>Contrato</label>
+        <select id="rng-select" onchange="carregarRng()">
+          <option value="">Selecione...</option>
+          <option value="EMP-003">EMP-003 — Roberto Alves</option>
+          <option value="EMP-007">EMP-007 — Julia Ramos</option>
+          <option value="EMP-001">EMP-001 — Ana Lima</option>
+        </select>
+      </div>
+      <div id="rng-body" style="display:none">
+        <div class="form-group">
+          <label>Saldo devedor</label>
+          <input type="text" id="rng-saldo" readonly style="background:var(--bg)">
+        </div>
+        <div class="rng-options">
+          <div class="rng-opt" onclick="selRng(this,'prazo')"><div class="rng-opt-title">Extensão de Prazo</div><div class="rng-opt-sub">Reduz a parcela</div></div>
+          <div class="rng-opt" onclick="selRng(this,'desconto')"><div class="rng-opt-title">Desconto Quitação</div><div class="rng-opt-sub">Pagamento à vista</div></div>
+          <div class="rng-opt" onclick="selRng(this,'carencia')"><div class="rng-opt-title">Carência</div><div class="rng-opt-sub">Pausa 2–3 meses</div></div>
+          <div class="rng-opt" onclick="selRng(this,'reducao')"><div class="rng-opt-title">Redução de Taxa</div><div class="rng-opt-sub">Nova taxa menor</div></div>
+        </div>
+        <div id="rng-params" style="display:none">
+          <div id="rng-form"></div>
+          <button class="btn btn-outline" onclick="simularRng()" style="margin-top:10px"><i class="ti ti-calculator"></i> Simular</button>
+          <div class="rng-result" id="rng-result">
+            <div class="rng-nums" id="rng-nums"></div>
+            <div style="font-size:12px;color:var(--blue)" id="rng-obs"></div>
+          </div>
+          <button class="btn btn-green" onclick="showToast('Renegociação registrada!')" style="margin-top:10px"><i class="ti ti-check"></i> Confirmar Renegociação</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTAS -->
+  <div class="page" id="page-alertas">
+    <div class="sec-header">
+      <span class="sec-title">Alertas</span>
+    </div>
+    <div id="alertas-list"></div>
+
+    <div class="card" style="margin-top:4px">
+      <div class="card-title">Relatório — Jun/2025</div>
+      <div style="margin-bottom:10px">
+        <div class="prog-label"><span>Meta de recebimento</span><span>80%</span></div>
+        <div class="prog-bar"><div class="prog-fill green" style="width:80%"></div></div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div class="prog-label"><span>Inadimplência (meta &lt;5%)</span><span>3,2%</span></div>
+        <div class="prog-bar"><div class="prog-fill green" style="width:64%"></div></div>
+      </div>
+      <div>
+        <div class="prog-label"><span>Carteira utilizada</span><span>72%</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="width:72%"></div></div>
+      </div>
+      <div class="sep"></div>
+      <button class="btn btn-outline" onclick="exportPDF()"><i class="ti ti-file-type-pdf"></i> Exportar relatório PDF</button>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<!-- BOTTOM NAV -->
+<nav class="nav">
+  <button class="nav-item active" id="nav-painel" onclick="navTo('painel')">
+    <i class="ti ti-layout-dashboard"></i>
+    <span>Painel</span>
+  </button>
+  <button class="nav-item" id="nav-contratos" onclick="navTo('contratos')">
+    <i class="ti ti-file-invoice"></i>
+    <span>Contratos</span>
+  </button>
+  <button class="nav-item" id="nav-pagamentos" onclick="navTo('pagamentos')">
+    <i class="ti ti-cash"></i>
+    <span>Pagamentos</span>
+  </button>
+  <button class="nav-item" id="nav-ia" onclick="navTo('ia')">
+    <i class="ti ti-sparkles"></i>
+    <span>IA</span>
+  </button>
+  <button class="nav-item" id="nav-alertas" onclick="navTo('alertas')">
+    <i class="ti ti-bell"></i>
+    <span>Alertas</span>
+    <span class="dot"></span>
+  </button>
+</nav>
+
+<!-- SHEET: NOVO CONTRATO -->
+<div class="sheet-overlay" id="sheet-contrato" onclick="closeSheetOutside(event,'sheet-contrato')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3>Novo Contrato</h3>
+      <button class="icon-btn" style="background:var(--bg);color:var(--text2)" onclick="closeSheet('sheet-contrato')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label>Cliente</label>
+        <select id="f-cliente">
+          <option>Selecione...</option>
+          <option>Ana Lima</option>
+          <option>Carlos Mendes</option>
+          <option>Mariana Costa</option>
+          <option>Novo cliente...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tipo de empréstimo</label>
+        <select>
+          <option>Pessoal</option>
+          <option>Consignado</option>
+          <option>Imobiliário</option>
+          <option>Veicular</option>
+          <option>Capital de Giro</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Valor (R$)</label>
+          <input type="number" id="f-valor" placeholder="15000" inputmode="decimal" oninput="calcContrato()">
+        </div>
+        <div class="form-group">
+          <label>Taxa (% a.m.)</label>
+          <input type="number" id="f-taxa" placeholder="2.5" inputmode="decimal" oninput="calcContrato()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Parcelas</label>
+          <input type="number" id="f-parcelas" placeholder="24" inputmode="numeric" oninput="calcContrato()">
+        </div>
+        <div class="form-group">
+          <label>1ª parcela</label>
+          <input type="date" id="f-inicio">
+        </div>
+      </div>
+      <div class="calc-box" id="calc-box">
+        <div class="calc-row">
+          <div class="calc-item"><label>PARCELA</label><span id="r-parcela">—</span></div>
+          <div class="calc-item"><label>TOTAL</label><span id="r-total">—</span></div>
+          <div class="calc-item"><label>JUROS</label><span id="r-juros">—</span></div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:14px">
+        <label>Garantia</label>
+        <select>
+          <option>Sem garantia</option>
+          <option>Avalista</option>
+          <option>Veículo</option>
+          <option>Imóvel</option>
+          <option>Consignado em folha</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea placeholder="Condições especiais..."></textarea>
+      </div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-outline" onclick="closeSheet('sheet-contrato')" style="flex:1">Cancelar</button>
+      <button class="btn btn-blue" onclick="closeSheet('sheet-contrato');showToast('✅ Contrato criado com sucesso!')" style="flex:2">Criar Contrato</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: REGISTRAR PAGAMENTO -->
+<div class="sheet-overlay" id="sheet-pgto" onclick="closeSheetOutside(event,'sheet-pgto')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3>Registrar Pagamento</h3>
+      <button class="icon-btn" style="background:var(--bg);color:var(--text2)" onclick="closeSheet('sheet-pgto')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="sheet-body">
+      <div class="form-group">
+        <label>Contrato</label>
+        <select>
+          <option>Selecione...</option>
+          <option>EMP-001 — Ana Lima</option>
+          <option>EMP-002 — Carlos Mendes</option>
+          <option>EMP-003 — Roberto Alves</option>
+          <option>EMP-004 — Mariana Costa</option>
+          <option>EMP-005 — Fernanda Souza</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Parcela nº</label>
+          <input type="number" placeholder="5" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label>Valor pago (R$)</label>
+          <input type="number" placeholder="0,00" inputmode="decimal">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Data do pagamento</label>
+          <input type="date">
+        </div>
+        <div class="form-group">
+          <label>Forma de pagamento</label>
+          <select>
+            <option>PIX</option>
+            <option>TED/DOC</option>
+            <option>Boleto</option>
+            <option>Dinheiro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Comprovante nº</label>
+        <input type="text" placeholder="Número do comprovante">
+      </div>
+      <div class="form-group">
+        <label>Observações</label>
+        <textarea placeholder="Juros de mora, desconto, etc."></textarea>
+      </div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-outline" onclick="closeSheet('sheet-pgto')" style="flex:1">Cancelar</button>
+      <button class="btn btn-green" onclick="closeSheet('sheet-pgto');showToast('✅ Pagamento registrado!')" style="flex:2">Confirmar Pagamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET: DETALHE CONTRATO -->
+<div class="sheet-overlay" id="sheet-detalhe" onclick="closeSheetOutside(event,'sheet-detalhe')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3 id="det-titulo">Detalhes</h3>
+      <button class="icon-btn" style="background:var(--bg);color:var(--text2)" onclick="closeSheet('sheet-detalhe')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="sheet-body" id="det-body"></div>
+    <div class="sheet-footer">
+      <button class="btn btn-outline" onclick="closeSheet('sheet-detalhe');navTo('ia')" style="flex:1"><i class="ti ti-arrows-exchange"></i> Renegociar</button>
+      <button class="btn btn-blue" onclick="closeSheet('sheet-detalhe');openSheet('sheet-pgto')" style="flex:1"><i class="ti ti-cash"></i> Pagamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <i class="ti ti-circle-check" style="font-size:20px;flex-shrink:0"></i>
+  <span id="toast-msg"></span>
+</div>
+
+<script>
+const fmt = v => 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+// DADOS
+const contratos = [
+  {id:'EMP-001',cliente:'Ana Lima',tipo:'Pessoal',valor:15000,taxa:2.5,parcelas:24,pagas:8,prox:'15/06/2025',status:'Ativo',parcela:780},
+  {id:'EMP-002',cliente:'Carlos Mendes',tipo:'Consignado',valor:28000,taxa:1.8,parcelas:36,pagas:12,prox:'10/06/2025',status:'Ativo',parcela:920},
+  {id:'EMP-003',cliente:'Roberto Alves',tipo:'Veicular',valor:42000,taxa:1.2,parcelas:48,pagas:3,prox:'05/06/2025',status:'Em Atraso',parcela:1150},
+  {id:'EMP-004',cliente:'Mariana Costa',tipo:'Pessoal',valor:8500,taxa:3.1,parcelas:12,pagas:9,prox:'20/06/2025',status:'Ativo',parcela:810},
+  {id:'EMP-005',cliente:'Fernanda Souza',tipo:'Imobiliário',valor:120000,taxa:0.8,parcelas:180,pagas:24,prox:'25/06/2025',status:'Ativo',parcela:1480},
+  {id:'EMP-006',cliente:'Paulo Nunes',tipo:'Pessoal',valor:35000,taxa:2.2,parcelas:18,pagas:18,prox:'—',status:'Quitado',parcela:0},
+  {id:'EMP-007',cliente:'Julia Ramos',tipo:'Pessoal',valor:5000,taxa:4.0,parcelas:6,pagas:1,prox:'08/06/2025',status:'Em Atraso',parcela:960},
+  {id:'EMP-008',cliente:'Diego Castro',tipo:'Consignado',valor:22000,taxa:1.5,parcelas:30,pagas:22,prox:'18/06/2025',status:'Ativo',parcela:870},
+];
+
+const pagamentos = [
+  {data:'02/06/2025',contrato:'EMP-002',cliente:'Carlos Mendes',parcela:13,valor:920,mora:0,total:920,status:'Pago'},
+  {data:'01/06/2025',contrato:'EMP-004',cliente:'Mariana Costa',parcela:10,valor:810,mora:0,total:810,status:'Pago'},
+  {data:'28/05/2025',contrato:'EMP-001',cliente:'Ana Lima',parcela:8,valor:780,mora:0,total:780,status:'Pago'},
+  {data:'25/05/2025',contrato:'EMP-005',cliente:'Fernanda Souza',parcela:25,valor:1480,mora:0,total:1480,status:'Pago'},
+  {data:'05/06/2025',contrato:'EMP-003',cliente:'Roberto Alves',parcela:4,valor:1150,mora:46,total:1196,status:'Pendente'},
+  {data:'08/06/2025',contrato:'EMP-007',cliente:'Julia Ramos',parcela:2,valor:960,mora:38,total:998,status:'Atrasado'},
+];
+
+// NAV
+const pageTitles = {painel:'Painel',contratos:'Contratos',pagamentos:'Pagamentos',ia:'Análise IA',alertas:'Alertas'};
+function navTo(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('nav-'+id).classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[id];
+  if(id==='contratos') renderContratos();
+  if(id==='pagamentos') renderPgtos();
+  if(id==='alertas') renderAlertas();
+}
+
+// SHEETS
+function openSheet(id) { document.getElementById(id).classList.add('open'); }
+function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
+function closeSheetOutside(e, id) { if(e.target === document.getElementById(id)) closeSheet(id); }
+
+// TOAST
+function showToast(msg) {
+  const t = document.getElementById('toast'), m = document.getElementById('toast-msg');
+  m.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// CALC CONTRATO
+function calcContrato() {
+  const v = parseFloat(document.getElementById('f-valor').value)||0;
+  const t = parseFloat(document.getElementById('f-taxa').value)||0;
+  const p = parseInt(document.getElementById('f-parcelas').value)||0;
+  const box = document.getElementById('calc-box');
+  if(v>0&&t>0&&p>0) {
+    const r=t/100, pmt=v*(r*Math.pow(1+r,p))/(Math.pow(1+r,p)-1);
+    document.getElementById('r-parcela').textContent = fmt(pmt.toFixed(2));
+    document.getElementById('r-total').textContent = fmt((pmt*p).toFixed(2));
+    document.getElementById('r-juros').textContent = fmt((pmt*p-v).toFixed(2));
+    box.classList.add('show');
+  } else box.classList.remove('show');
+}
+
+// PAINEL
+function renderPainel() {
+  const meses=['Jan','Fev','Mar','Abr','Mai','Jun'];
+  const vals=[14200,16800,15400,18100,16900,18340];
+  const maxV = Math.max(...vals);
+  const bc = document.getElementById('bars-dash'), bl = document.getElementById('bars-lbl');
+  bc.innerHTML=''; bl.innerHTML='';
+  meses.forEach((m,i)=>{
+    const pct = Math.round(vals[i]/maxV*100);
+    bc.innerHTML += `<div class="bar-col"><div class="bar-rect" style="height:${pct}%;background:${i===5?'#185FA5':'#B5D4F4'}"></div></div>`;
+    bl.innerHTML += `<span style="flex:1;text-align:center;font-size:10px;color:var(--text2)">${m}</span>`;
+  });
+
+  const prox = document.getElementById('proximos-list');
+  prox.innerHTML = contratos.filter(c=>c.status!=='Quitado').slice(0,4).map(c=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:13px;font-weight:600">${c.cliente}</div>
+        <div style="font-size:12px;color:var(--text2)">${c.id} · ${c.prox}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:700">${fmt(c.parcela)}</div>
+        <div>${spill(c.status)}</div>
+      </div>
+    </div>`).join('');
+
+  const dist = document.getElementById('distrib-list');
+  const tipos=[{t:'Imobiliário',v:120000},{t:'Consignado',v:50000},{t:'Veicular',v:42000},{t:'Capital de Giro',v:35000},{t:'Pessoal',v:28500}];
+  const tot=275500;
+  dist.innerHTML = tipos.map(({t,v})=>{
+    const pct=Math.round(v/tot*100);
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>${t}</span><span style="font-weight:600">${pct}% · ${fmt(v)}</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// STATUS PILL
+function spill(s) {
+  if(s==='Ativo'||s==='Pago'||s==='Regular') return `<span class="pill pill-green">${s}</span>`;
+  if(s==='Em Atraso'||s==='Atrasado') return `<span class="pill pill-red">${s}</span>`;
+  if(s==='Quitado') return `<span class="pill pill-teal">${s}</span>`;
+  return `<span class="pill pill-amber">${s}</span>`;
+}
+
+// CONTRATOS
+let filtroAtual = '';
+function setFiltro(f) {
+  filtroAtual = f;
+  document.querySelectorAll('#page-contratos .btn-sm').forEach(b => {
+    b.className = 'btn btn-sm btn-outline';
+  });
+  const ids = {'':`filt-todos`,'Ativo':'filt-ativo','Em Atraso':'filt-atraso','Quitado':'filt-quitado'};
+  if(ids[f]) document.getElementById(ids[f]).className = 'btn btn-sm btn-blue';
+  renderContratos();
+}
+
+function filtrarContratos() { renderContratos(); }
+
+function renderContratos() {
+  const q = (document.getElementById('search-cont').value||'').toLowerCase();
+  const lista = contratos.filter(c =>
+    (!filtroAtual || c.status === filtroAtual) &&
+    (!q || c.cliente.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))
+  );
+  const icons = {'Ativo':'ti-file-invoice','Em Atraso':'ti-alert-triangle','Quitado':'ti-circle-check'};
+  const iconColors = {'Ativo':'','Em Atraso':'red','Quitado':'green'};
+  document.getElementById('contratos-list').innerHTML = lista.map(c => {
+    const pct = Math.round(c.pagas/c.parcelas*100);
+    return `<div class="contrato-item" onclick="abrirDetalhe('${c.id}')">
+      <div class="contrato-icon ${iconColors[c.status]}"><i class="ti ${icons[c.status]||'ti-file-invoice'}"></i></div>
+      <div class="contrato-info">
+        <div class="contrato-nome">${c.cliente}</div>
+        <div class="contrato-meta">${c.id} · ${c.tipo}</div>
+        <div class="prog-wrap">
+          <div class="prog-label"><span>${c.pagas}/${c.parcelas} parcelas</span><span>${pct}%</span></div>
+          <div class="prog-bar"><div class="prog-fill ${c.status==='Em Atraso'?'red':''}" style="width:${pct}%"></div></div>
+        </div>
+      </div>
+      <div class="contrato-right">
+        <div class="contrato-valor">${fmt(c.valor)}</div>
+        <div class="contrato-status">${spill(c.status)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// DETALHE
+function abrirDetalhe(id) {
+  const c = contratos.find(x=>x.id===id); if(!c) return;
+  document.getElementById('det-titulo').textContent = c.id + ' — ' + c.cliente;
+  const pct = Math.round(c.pagas/c.parcelas*100);
+  const saldo = c.parcela*(c.parcelas-c.pagas);
+  const parcs = [...Array(Math.min(c.parcelas,6))].map((_,i)=>{
+    const n=i+1, pago=n<=c.pagas, atr=!pago&&c.status==='Em Atraso'&&n===c.pagas+1;
+    return `<div class="tl-item ${pago?'ok':atr?'bad':''}">
+      <div class="tl-title">${n}ª parcela — ${fmt(c.parcela)}</div>
+      <div class="tl-sub">${pago?'✅ Paga':atr?'⚠️ Em atraso':'⏳ Pendente'}</div>
+    </div>`;
+  });
+  document.getElementById('det-body').innerHTML = `
+    <div class="detail-kpi">
+      <div class="detail-kpi-item"><label>Valor</label><span style="color:var(--blue)">${fmt(c.valor)}</span></div>
+      <div class="detail-kpi-item"><label>Parcela</label><span>${fmt(c.parcela)}</span></div>
+      <div class="detail-kpi-item"><label>Saldo</label><span>${fmt(saldo)}</span></div>
+    </div>
+    <div style="margin-bottom:16px">
+      <div class="prog-label"><span>Progresso</span><span>${c.pagas}/${c.parcelas} (${pct}%)</span></div>
+      <div class="prog-bar" style="height:8px"><div class="prog-fill ${c.status==='Em Atraso'?'red':''}" style="width:${pct}%"></div></div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em">Parcelas</div>
+    <div class="timeline">${parcs.join('')}${c.parcelas>6?`<div style="font-size:12px;color:var(--text2)">+ ${c.parcelas-6} parcelas...</div>`:''}</div>`;
+  openSheet('sheet-detalhe');
+}
+
+// PAGAMENTOS
+function filtrarPgtos() { renderPgtos(); }
+function renderPgtos() {
+  const q = (document.getElementById('search-pgto').value||'').toLowerCase();
+  const lista = pagamentos.filter(p=>!q||p.cliente.toLowerCase().includes(q)||p.contrato.toLowerCase().includes(q));
+  document.getElementById('pgtos-list').innerHTML = lista.map(p=>`
+    <div class="pgto-item">
+      <div class="pgto-header">
+        <div>
+          <div class="pgto-cont">${p.contrato}</div>
+          <div class="pgto-cli">${p.cliente} · ${p.parcela}ª parcela · ${p.data}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="pgto-valor">${fmt(p.total)}</div>
+          ${p.mora>0?`<div class="pgto-mora">+${fmt(p.mora)} mora</div>`:''}
+          <div style="margin-top:3px">${spill(p.status)}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ALERTAS
+function renderAlertas() {
+  document.getElementById('alertas-list').innerHTML = [
+    {t:'danger',i:'ti-alert-triangle',ttl:'Atraso — EMP-003',desc:'Roberto Alves — parcela 4 vencida há 5 dias. Multa acumulada: R$ 46,00'},
+    {t:'danger',i:'ti-alert-triangle',ttl:'Atraso — EMP-007',desc:'Julia Ramos — parcela 2 vencida há 3 dias. Multa acumulada: R$ 38,00'},
+    {t:'warn',i:'ti-clock',ttl:'Vencimento em 3 dias — EMP-001',desc:'Ana Lima — R$ 780,00 vence em 15/06/2025'},
+    {t:'warn',i:'ti-clock',ttl:'Vencimento em 4 dias — EMP-002',desc:'Carlos Mendes — R$ 920,00 vence em 10/06/2025'},
+    {t:'info',i:'ti-circle-check',ttl:'Contrato quitado — EMP-006',desc:'Paulo Nunes — R$ 35.000 totalmente quitado em Mai/2025'},
+  ].map(a=>`
+    <div class="alerta alerta-${a.t==='danger'?'danger':a.t==='warn'?'warn':'info'}">
+      <i class="ti ${a.i}"></i>
+      <div><div class="alerta-title">${a.ttl}</div><div class="alerta-sub">${a.desc}</div></div>
+    </div>`).join('');
+}
+
+// RENEGOCIAÇÃO
+let rngContrato=null, rngSel=null;
+function carregarRng(){
+  const id=document.getElementById('rng-select').value;
+  const c=contratos.find(x=>x.id===id);
+  rngContrato=c;
+  if(!c){document.getElementById('rng-body').style.display='none';return;}
+  document.getElementById('rng-saldo').value=fmt(c.parcela*(c.parcelas-c.pagas));
+  document.getElementById('rng-body').style.display='block';
+  document.getElementById('rng-params').style.display='none';
+  document.querySelectorAll('.rng-opt').forEach(x=>x.classList.remove('sel'));
+  rngSel=null;
+}
+
+function selRng(el,tipo){
+  document.querySelectorAll('.rng-opt').forEach(x=>x.classList.remove('sel'));
+  el.classList.add('sel'); rngSel=tipo;
+  document.getElementById('rng-params').style.display='block';
+  document.getElementById('rng-result').classList.remove('show');
+  const forms={
+    prazo:`<div class="form-row"><div class="form-group"><label>Novo nº parcelas</label><input type="number" id="rp1" placeholder="60" inputmode="numeric"></div><div class="form-group"><label>Nova taxa % a.m.</label><input type="number" id="rp2" placeholder="${rngContrato?rngContrato.taxa:''}" inputmode="decimal"></div></div>`,
+    desconto:`<div class="form-row"><div class="form-group"><label>Desconto encargos %</label><input type="number" id="rp1" placeholder="30" inputmode="decimal"></div><div class="form-group"><label>Entrada mín. R$</label><input type="number" id="rp2" placeholder="500" inputmode="decimal"></div></div>`,
+    carencia:`<div class="form-group"><label>Meses de carência</label><select id="rp1"><option value="2">2 meses</option><option value="3">3 meses</option></select></div>`,
+    reducao:`<div class="form-group"><label>Nova taxa % a.m.</label><input type="number" id="rp1" placeholder="0.8" inputmode="decimal"></div>`,
+  };
+  document.getElementById('rng-form').innerHTML=forms[tipo]||'';
+}
+
+function simularRng(){
+  if(!rngContrato||!rngSel)return;
+  const saldo=rngContrato.parcela*(rngContrato.parcelas-rngContrato.pagas);
+  let nums=[],obs='';
+  if(rngSel==='prazo'){
+    const np=parseInt(document.getElementById('rp1').value)||rngContrato.parcelas+12;
+    const nt=parseFloat(document.getElementById('rp2').value)||rngContrato.taxa;
+    const r=nt/100,nova=saldo*(r*Math.pow(1+r,np))/(Math.pow(1+r,np)-1);
+    nums=[{l:'Nova parcela',v:fmt(nova.toFixed(2))},{l:'Redução',v:fmt((rngContrato.parcela-nova).toFixed(2))},{l:'Novo prazo',v:np+' meses'}];
+    obs=`Redução de ${Math.round((1-nova/rngContrato.parcela)*100)}% na parcela mensal.`;
+  } else if(rngSel==='desconto'){
+    const desc=parseFloat(document.getElementById('rp1').value)||30;
+    const enc=saldo*0.2,dv=enc*(desc/100);
+    nums=[{l:'Saldo atual',v:fmt(saldo)},{l:'Desconto',v:fmt(dv.toFixed(2))},{l:'Valor final',v:fmt((saldo-dv).toFixed(2))}];
+    obs=`Desconto de ${desc}% sobre encargos acumulados.`;
+  } else if(rngSel==='carencia'){
+    const mc=document.getElementById('rp1').value;
+    nums=[{l:'Carência',v:mc+' meses'},{l:'Parcelas pausadas',v:mc},{l:'Retomada',v:'Set/2025'}];
+    obs='Sem cobrança adicional durante a carência.';
+  } else {
+    const nt=parseFloat(document.getElementById('rp1').value)||0.8;
+    const rem=rngContrato.parcelas-rngContrato.pagas,r=nt/100,nova=saldo*(r*Math.pow(1+r,rem))/(Math.pow(1+r,rem)-1);
+    nums=[{l:'Nova taxa',v:nt+'% a.m.'},{l:'Nova parcela',v:fmt(nova.toFixed(2))},{l:'Economia',v:fmt(((rngContrato.parcela-nova)*rem).toFixed(2))}];
+    obs=`Taxa reduzida de ${rngContrato.taxa}% para ${nt}% a.m.`;
+  }
+  const el=document.getElementById('rng-result');
+  el.classList.add('show');
+  document.getElementById('rng-nums').innerHTML=nums.map(n=>`<div class="rng-num"><label>${n.l}</label><span>${n.v}</span></div>`).join('');
+  document.getElementById('rng-obs').textContent=obs;
+}
+
+// IA
+const ctxIA={
+  'EMP-001':{score:780,pagas:8,total:24,atraso:0,taxa:2.5,saldo:fmt(780*16),tipo:'Pessoal',nome:'Ana Lima'},
+  'EMP-002':{score:820,pagas:12,total:36,atraso:0,taxa:1.8,saldo:fmt(920*24),tipo:'Consignado',nome:'Carlos Mendes'},
+  'EMP-003':{score:590,pagas:3,total:48,atraso:5,taxa:1.2,saldo:fmt(1150*45),tipo:'Veicular',nome:'Roberto Alves'},
+  'EMP-004':{score:740,pagas:9,total:12,atraso:0,taxa:3.1,saldo:fmt(810*3),tipo:'Pessoal',nome:'Mariana Costa'},
+  'EMP-007':{score:510,pagas:1,total:6,atraso:3,taxa:4.0,saldo:fmt(960*5),tipo:'Pessoal',nome:'Julia Ramos'},
+};
+
+function carregarContextoIA(){
+  const id=document.getElementById('ia-select').value;
+  const ctx=ctxIA[id];
+  const ctxEl=document.getElementById('ia-ctx'),chips=document.getElementById('ia-chips');
+  if(!ctx){ctxEl.style.display='none';chips.innerHTML='';return;}
+  ctxEl.style.display='block';
+  const sc=ctx.score>=750?'var(--green)':ctx.score>=600?'var(--amber)':'var(--red)';
+  document.getElementById('ia-ctx-body').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+      <div><div style="font-size:10px;color:var(--text2)">Score</div><div style="font-size:16px;font-weight:700;color:${sc}">${ctx.score}</div></div>
+      <div><div style="font-size:10px;color:var(--text2)">Parcelas</div><div style="font-size:16px;font-weight:700">${ctx.pagas}/${ctx.total}</div></div>
+      <div><div style="font-size:10px;color:var(--text2)">Dias atraso</div><div style="font-size:16px;font-weight:700;color:${ctx.atraso>0?'var(--red)':'var(--green)'}">${ctx.atraso||'—'}</div></div>
+      <div><div style="font-size:10px;color:var(--text2)">Saldo</div><div style="font-size:14px;font-weight:700">${ctx.saldo}</div></div>
+    </div>`;
+  const sugs=ctx.atraso>0?['Risco de inadimplência?','Devo renegociar?','Estratégia de cobrança']:['Perfil de risco','Elegível para novo empréstimo?','Aumentar limite?'];
+  chips.innerHTML=sugs.map(s=>`<button class="ai-chip" onclick="quickIA('${s}')">${s}</button>`).join('');
+  adicionarMsgIA('ai',`Contrato carregado: <strong>${id} — ${ctx.nome}</strong>. O que deseja analisar?`);
+}
+
+function quickIA(txt){document.getElementById('ai-in').value=txt;enviarIA();}
+
+let historicoIA=[];
+async function enviarIA(){
+  const inp=document.getElementById('ai-in'),q=inp.value.trim();
+  if(!q)return; inp.value='';
+  const id=document.getElementById('ia-select').value, ctx=ctxIA[id];
+  adicionarMsgIA('user',q);
+  const loadId=adicionarMsgIA('ai','<em style="opacity:.5">Analisando...</em>');
+  let sys=`Você é um analista de crédito especialista em gestão de empréstimos. Responda em português brasileiro de forma objetiva, técnica e útil. Máximo 3 parágrafos. Use bullet points quando listar itens.`;
+  if(ctx)sys+=`\n\nCONTRATO: ${id} — ${ctx.nome}\nTipo: ${ctx.tipo} | Parcelas: ${ctx.pagas}/${ctx.total} | Taxa: ${ctx.taxa}% a.m. | Score: ${ctx.score} | Dias atraso: ${ctx.atraso} | Saldo: ${ctx.saldo}`;
+  else sys+=`\n\nCARTEIRA GERAL: 8 contratos, R$ 284.500 total, inadimplência 3,2%, 2 contratos em atraso.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:sys,messages:[...historicoIA,{role:'user',content:q}]})});
+    const data=await res.json();
+    const txt=data.content&&data.content[0]?data.content[0].text:'Não consegui obter resposta.';
+    atualizarMsgIA(loadId,txt);
+    historicoIA.push({role:'user',content:q},{role:'assistant',content:txt});
+    if(historicoIA.length>10)historicoIA=historicoIA.slice(-10);
+  }catch(e){atualizarMsgIA(loadId,'Erro de conexão. Tente novamente.');}
+}
+
+let msgIdIA=0;
+function adicionarMsgIA(role,html){
+  const id='ia-'+(++msgIdIA),wrap=document.getElementById('ai-msgs'),div=document.createElement('div');
+  div.className='ai-bubble '+role; div.id=id; div.innerHTML=html;
+  wrap.appendChild(div); wrap.scrollTop=wrap.scrollHeight; return id;
+}
+function atualizarMsgIA(id,html){
+  const el=document.getElementById(id);
+  if(el)el.innerHTML=html.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+}
+
+// EXPORT PDF
+function exportPDF(){
+  const win=window.open('','_blank');
+  if(!win){alert('Permita popups no Safari para exportar.');return;}
+  const now=new Date().toLocaleDateString('pt-BR');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório LoanManager</title>
+  <style>body{font-family:-apple-system,Arial,sans-serif;max-width:750px;margin:40px auto;color:#222;font-size:13px}h1{color:#185FA5;border-bottom:2px solid #185FA5;padding-bottom:8px}h2{color:#185FA5;margin:20px 0 8px;font-size:14px}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}.kpi{border:1px solid #ddd;border-radius:8px;padding:12px}.kpi-l{font-size:11px;color:#666;margin-bottom:3px}.kpi-v{font-size:18px;font-weight:bold}table{width:100%;border-collapse:collapse;margin-bottom:20px}th{background:#185FA5;color:#fff;padding:8px;text-align:left;font-size:12px}td{padding:7px 8px;border-bottom:1px solid #eee;font-size:12px}.footer{margin-top:30px;padding-top:10px;border-top:1px solid #ddd;font-size:10px;color:#999;text-align:center}@media print{.no-print{display:none}}</style>
+  </head><body>
+  <h1>LoanManager — Relatório Gerencial</h1><p style="color:#666;font-size:11px">Gerado em ${now}</p>
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-l">Carteira</div><div class="kpi-v" style="color:#185FA5">R$ 284.500</div></div>
+    <div class="kpi"><div class="kpi-l">Recebido</div><div class="kpi-v" style="color:#0F6E56">R$ 18.340</div></div>
+    <div class="kpi"><div class="kpi-l">Inadimplência</div><div class="kpi-v" style="color:#A32D2D">3,2%</div></div>
+  </div>
+  <h2>Contratos</h2>
+  <table><thead><tr><th>Contrato</th><th>Cliente</th><th>Tipo</th><th>Valor</th><th>Parcelas</th><th>Status</th></tr></thead>
+  <tbody>${contratos.map(c=>`<tr><td>${c.id}</td><td>${c.cliente}</td><td>${c.tipo}</td><td>${fmt(c.valor)}</td><td>${c.pagas}/${c.parcelas}</td><td>${c.status}</td></tr>`).join('')}</tbody></table>
+  <div class="no-print" style="text-align:center;margin:20px"><button onclick="window.print()" style="background:#185FA5;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:15px;cursor:pointer">Salvar como PDF</button></div>
+  <div class="footer">LoanManager · Documento confidencial · ${now}</div>
+  </body></html>`);
+  win.document.close();
+}
+
+// INIT
+renderPainel();
+renderContratos();
+renderPgtos();
+</script>
+</body>
+</html>
